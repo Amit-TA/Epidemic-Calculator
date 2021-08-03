@@ -4,13 +4,13 @@
   // import { Date } from "d3-time"
   import Chart from './Chart.svelte';
   import { onMount } from 'svelte';
-  import { selectAll } from 'd3-selection'
+  import { selectAll } from 'd3-selection';
   import { drag } from 'd3-drag';
   import queryString from "query-string";
   import Checkbox from './Checkbox.svelte';
   import Arrow from './Arrow.svelte';
-  import { format } from 'd3-format'
-  import { event } from 'd3-selection'
+  import { format } from 'd3-format';
+  import { event } from 'd3-selection';
 
   import katex from 'katex';
 
@@ -32,6 +32,7 @@
     return x
   }
 
+  // methods for creating data points
   var Integrators = {
     Euler    : [[1]],
     Midpoint : [[.5,.5],[0, 1]],
@@ -48,7 +49,6 @@
   // y is the initial state, t is the time, h is the timestep
   // updated y is returned.
   var integrate=(m,f,y,t,h)=>{
-   
     for (var k=[],ki=0; ki<m.length; ki++) {
       var _y=y.slice(), 
       dt=ki?((m[ki-1][0])*h):0;      
@@ -58,7 +58,6 @@
         }
       }
       k[ki]=f(t+dt,_y,dt);
-      //console.log(k[ki]) 
     }
     for (var r=y.slice(),l=0; l<_y.length; l++) {
       for (var j=0; j<k.length; j++) {
@@ -68,22 +67,21 @@
     return r;
   }
 
-
   $: Time_to_death     = 32
   $: logN              = Math.log(7e6)
   $: N                 = Math.exp(logN)
   $: I0                = 1
   $: R0                = 2.2
   $: R0_1              = 2.2 // R0 for second intervention
-  $: D_incbation       = 5.2       
-  $: D_infectious      = 2.9 
-  $: D_recovery_mild   = (14 - 2.9)  
+  $: D_incbation       = 5.2
+  $: D_infectious      = 2.9
+  $: D_recovery_mild   = (14 - 2.9)
   $: D_recovery_severe = (31.5 - 2.9)
   $: D_hospital_lag    = 5
-  $: D_death           = Time_to_death - D_infectious 
-  $: CFR               = 0.02  
-  $: InterventionTime  = 100 
-  $: InterventionTime2  = 150  
+  $: D_death           = Time_to_death - D_infectious
+  $: CFR               = 0.02
+  $: InterventionTime  = 100
+  $: InterventionTime2  = 150
   $: OMInterventionAmt = 2/3
   $: InterventionAmt   = 1 - OMInterventionAmt
   $: OMInterventionAmt2 = 3/4
@@ -111,40 +109,37 @@
                "InterventionAmt2":InterventionAmt2,
                "D_hospital_lag":D_hospital_lag,
                "P_SEVERE": P_SEVERE,
-              "Intervention_Selected":Intervention_Selected
+               "Intervention_Selected":Intervention_Selected
               })
 
 // dt, N, I0, R0, D_incbation, D_infectious, D_recovery_mild, D_hospital_lag, D_recovery_severe, D_death, P_SEVERE, CFR, InterventionTime, InterventionAmt, duration
 
   function get_solution(dt, N, I0, R0, R0_1, D_incbation, D_infectious, D_recovery_mild, D_hospital_lag, D_recovery_severe, D_death, P_SEVERE, CFR, InterventionTime, InterventionAmt,InterventionTime2,InterventionAmt2, duration) {
-    
     var interpolation_steps = 40
     var steps = 110*interpolation_steps
     var dt = dt/interpolation_steps
     var sample_step = interpolation_steps
-    
     var method = Integrators["RK4"]
-    function f(t, x){        
-      // SEIR ODE
-      if (Intervention_Selected == 1) {
-      if (t > InterventionTime && t < InterventionTime + duration){
-        var beta = (InterventionAmt)*R0/(D_infectious)
-      } else if (t > InterventionTime + duration) {
-        var beta = 0.5*R0/(D_infectious)        
-      } else {
-        var beta = R0/(D_infectious)
-      }
-    }
-    else {
-      if (t > InterventionTime2 && t < InterventionTime2 + duration){
-        var beta = (InterventionAmt2)*R0_1/(D_infectious)
-      } else if (t > InterventionTime2 + duration) {
-        var beta = 0.5*R0_1/(D_infectious)        
-      } else {
-        var beta = R0_1/(D_infectious)
-      }
-    }
 
+    function f(t, x){
+      // SEIR ODE
+      if (Intervention_Selected === 1) {
+        if (t > InterventionTime && t < InterventionTime + duration){
+            var beta = (InterventionAmt)*R0/(D_infectious)
+        } else if (t > InterventionTime + duration) {
+            var beta = 0.5*R0/(D_infectious)        
+        } else {
+          var beta = R0/(D_infectious)
+        }
+      } else {
+        if (t > InterventionTime2 && t < InterventionTime2 + duration){
+          var beta = (InterventionAmt2)*R0_1/(D_infectious)
+        } else if (t > InterventionTime2 + duration) {
+          var beta = 0.5*R0_1/(D_infectious)        
+        } else {
+          var beta = R0_1/(D_infectious)
+        }
+      }
 
       var a     = 1/D_incbation
       var gamma = 1/D_infectious
@@ -185,7 +180,8 @@
     var P  = []
     var TI = []
     var Iters = []
-    while (steps--) { 
+
+    while (steps--) {
       if ((steps+1) % (sample_step) == 0) {
             //    Dead   Hospital          Recovered        Infectious   Exposed
         P.push([ N*v[9], N*(v[5]+v[6]),  N*(v[7] + v[8]), N*v[2],    N*v[1] ])
@@ -194,8 +190,7 @@
         // console.log((v[0] + v[1] + v[2] + v[3] + v[4] + v[5] + v[6] + v[7] + v[8] + v[9]))
         // console.log(v[0] , v[1] , v[2] , v[3] , v[4] , v[5] , v[6] , v[7] , v[8] , v[9])
       }
-      v =integrate(method,f,v,t,dt); 
-      
+      v = integrate(method,f,v,t,dt); 
       t+=dt
     }
     return {"P": P, 
@@ -209,7 +204,7 @@
   function max(P, checked) {
     return P.reduce((max, b) => Math.max(max, sum(b, checked) ), sum(P[0], checked) )
   }
-
+  
   $: Sol            = get_solution(dt, N, I0, R0,R0_1, D_incbation, D_infectious, D_recovery_mild, D_hospital_lag, D_recovery_severe, D_death, P_SEVERE, CFR, InterventionTime, InterventionAmt,InterventionTime2,InterventionAmt2, duration)
   $: P              = Sol["P"].slice(0,100)
   $: timestep       = dt
@@ -265,7 +260,7 @@
   var drag_intervention = function (){
     var dragstarty = 0
     var InterventionTimeStart = 0
-
+    var R0_1 = 2.2
     var dragstarted = function (d) {
       dragstarty = event.x  
       InterventionTimeStart = InterventionTime
@@ -287,6 +282,7 @@
 
     return drag().on("drag", dragged).on("start", dragstarted).on("end", dragend)
   }
+
 //Drag Intervention for Intervention2
 var drag_intervention2 = function (){
     var dragstarty = 0
@@ -372,7 +368,6 @@ var drag_intervention2 = function (){
       if (!(parsed.D_hospital_lag === undefined)) {D_hospital_lag = parseFloat(parsed.D_hospital_lag)}
       if (!(parsed.P_SEVERE === undefined)) {P_SEVERE = parseFloat(parsed.P_SEVERE)}
       if (!(parsed.Time_to_death === undefined)) {Time_to_death = parseFloat(parsed.Time_to_death)}
-
     }
   });
 
@@ -906,7 +901,7 @@ var drag_intervention2 = function (){
                     pointer-events: all;
                     cursor:col-resize;
                     height:{height+19}px">
-
+        
         <div style="position:absolute; opacity: 0.5; top:-5px; left:10px; width: 120px">
         <span style="font-size: 13px">{@html math_inline("\\mathcal{R}_t=" + (R0_1*InterventionAmt2).toFixed(2) )}</span> ⟶ 
         </div>
@@ -944,7 +939,7 @@ var drag_intervention2 = function (){
       <!-- Intervention Line slider -->
       <div style="position: absolute; width:{width+15}px; height: {height}px; position: absolute; top:120px; left:10px; pointer-events: none">
         <div style="
-            position: absolute;
+            position: absolute; 
             top:-38px;
             left:{xScaleTime(InterventionTime)}px;
             visibility: {(xScaleTime(InterventionTime) < (width - padding.right)) ? 'visible':'hidden'};
@@ -1094,11 +1089,11 @@ var drag_intervention2 = function (){
       <div class="paneldesc" style="height:30px;" >{@html math_inline("\\mathcal{R}_0")} for Intervention 1</div>
       
       <div class="slidertext">{R0}</div>
-      <input class="range" type=number bind:value={R0} min=0.01 max=10 step=0.01> 
+      <input class="range" type=number bind:value={R0} on:input="{() => Intervention_Selected = 1}" min=0.01 max=10 step=0.01> 
       <div class="paneldesc" style="height:30px;">{@html math_inline("\\mathcal{R}_0")} for Intervention 2</div>
       
       <div class="slidertext">{R0_1}</div>
-      <input class="range" type=number bind:value={R0_1} min=0.01 max=10 step=0.01> 
+      <input class="range" type=number bind:value={R0_1} on:input="{() => Intervention_Selected = 2}" min=0.01 max=10 step=0.01> 
     </div> 
 
     <div class="column">
@@ -1288,7 +1283,6 @@ The clinical dynamics in this model are an elaboration on SEIR that simulates th
 
 <!-- Input data -->
 <div style="margin-bottom: 30px">
-
   <div class="center" style="padding: 10px; margin-top: 3px; width: 925px">
     <div class="legendtext">Export parameters:</div>
     <form>
