@@ -10,4 +10,10 @@ import App from './App.svelte';
 
 
 const target = document.body
+
+function replaceContents ( node ) {
+    node.innerHTML = '';
+    return node;
+  }
+const target1 = document.querySelector( '#model_map' )
 new App({ target, props: { } });

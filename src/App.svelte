@@ -69,7 +69,7 @@
 
   $: Time_to_death     = 32
   $: logN              = Math.log(7e6)
-  $: N                 = Math.exp(logN)
+  $: N                 = Math.round(Math.exp(logN))
   $: I0                = 1
   $: R0                = 2.2
   $: R0_1              = 2.2 // R0 for second intervention
@@ -1075,7 +1075,7 @@ var drag_intervention2 = function (){
       <div class="paneltitle">Population Inputs</div>
       <div class="paneldesc" style="height:30px">Size of population.<br></div>
       <div class="slidertext">{format(",")(Math.round(N))}</div>
-      <input class="range" style="margin-bottom: 8px" type=number bind:value={logN} min={5} max=25 step=0.01>
+      <input class="range" style="margin-bottom: 8px" type=number bind:value={N} step=0.01>
       <div class="paneldesc" style="height:29px; border-top: 1px solid #EEE; padding-top: 10px">Number of initial infections.<br></div>
       <div class="slidertext">{I0}</div>
       <input class="range" type=number bind:value={I0} min=1 max=10000 step=1>
