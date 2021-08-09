@@ -66,13 +66,21 @@
     }
     return r;
   }
+  let R0 = 2.2;
+  let R0_1 = 2.2;
 
   $: Time_to_death     = 32
   $: logN              = Math.log(7e6)
   $: N                 = Math.round(Math.exp(logN))
   $: I0                = 1
-  $: R0                = 2.2
-  $: R0_1              = 2.2 // R0 for second intervention
+  //$: R0                = 2.2
+  //$: R0_1              = 2.2 // R0 for second intervention
+  $: if (R0 === undefined) {
+		R0 = 2.2
+	}
+  $: if (R0_1 === undefined) {
+		R0_1 = 2.2
+	}
   $: D_incbation       = 5.2
   $: D_infectious      = 2.9
   $: D_recovery_mild   = (14 - 2.9)
@@ -120,7 +128,7 @@
     var dt = dt/interpolation_steps
     var sample_step = interpolation_steps
     var method = Integrators["RK4"]
-
+    
     function f(t, x){
       // SEIR ODE
       if (Intervention_Selected === 1) {
@@ -190,7 +198,7 @@
         // console.log((v[0] + v[1] + v[2] + v[3] + v[4] + v[5] + v[6] + v[7] + v[8] + v[9]))
         // console.log(v[0] , v[1] , v[2] , v[3] , v[4] , v[5] , v[6] , v[7] , v[8] , v[9])
       }
-      v = integrate(method,f,v,t,dt); 
+      v = integrate(method,f,v,t,dt);
       t+=dt
     }
     return {"P": P, 
@@ -223,6 +231,7 @@
   var Plock = 1
 
   var drag_y = function (){
+    
     var dragstarty = 0
     var Pmaxstart = 0
 
@@ -260,13 +269,13 @@
   var drag_intervention = function (){
     var dragstarty = 0
     var InterventionTimeStart = 0
-    var R0_1 = 2.2
+   // var R0_1 = 2.2
     var dragstarted = function (d) {
-      dragstarty = event.x  
+      dragstarty = event.x
       InterventionTimeStart = InterventionTime
       Plock = Pmax
-      lock = false
-      Intervention_Selected = 1
+      lock = true
+      //Intervention_Selected = 1
     }
 
     var dragged = function (d) {
