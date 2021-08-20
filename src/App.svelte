@@ -59,6 +59,7 @@
       }
       k[ki]=f(t+dt,_y,dt);
     }
+    
     for (var r=y.slice(),l=0; l<_y.length; l++) {
       for (var j=0; j<k.length; j++) {
         r[l]=r[l]+h*(k[j][l])*(m[ki-1][j]);
@@ -66,9 +67,10 @@
     }
     return r;
   }
+
   let R0 = 2.2;
   let R0_1 = 2.2;
-
+  $: phase = 1;
   $: Time_to_death     = 32
   $: logN              = Math.log(7e6)
   $: N                 = Math.round(Math.exp(logN))
@@ -76,10 +78,10 @@
   //$: R0                = 2.2
   //$: R0_1              = 2.2 // R0 for second intervention
   $: if (R0 === undefined) {
-		R0 = 2.2
+		R0 = 0
 	}
   $: if (R0_1 === undefined) {
-		R0_1 = 2.2
+		R0_1 = 0
 	}
   $: D_incbation       = 5.2
   $: D_infectious      = 2.9
@@ -121,14 +123,17 @@
               })
 
 // dt, N, I0, R0, D_incbation, D_infectious, D_recovery_mild, D_hospital_lag, D_recovery_severe, D_death, P_SEVERE, CFR, InterventionTime, InterventionAmt, duration
-
-  function get_solution(dt, N, I0, R0, R0_1, D_incbation, D_infectious, D_recovery_mild, D_hospital_lag, D_recovery_severe, D_death, P_SEVERE, CFR, InterventionTime, InterventionAmt,InterventionTime2,InterventionAmt2, duration) {
+  let v1 = [];
+  let v2 = [];
+  let v3 = [];
+  
+  function get_solution(dt, N, I0, R0, R0_1, D_incbation, D_infectious, D_recovery_mild, D_hospital_lag, D_recovery_severe, D_death, P_SEVERE, CFR, InterventionTime, InterventionAmt,InterventionTime2,InterventionAmt2, duration, phase=3) {
     var interpolation_steps = 40
     var steps = 110*interpolation_steps
     var dt = dt/interpolation_steps
     var sample_step = interpolation_steps
     var method = Integrators["RK4"]
-    
+
     function f(t, x){
       // SEIR ODE
       if (Intervention_Selected === 1) {
@@ -181,27 +186,106 @@
       //      0   1   2   3      4        5          6       7        8          9
       return [dS, dE, dI, dMild, dSevere, dSevere_H, dFatal, dR_Mild, dR_Severe, dR_Fatal]
     }
+    
+    // var v = [];
+    // if(phase==1){
+    //   v = [1 - I0/N, 0, I0/N, 0, 0, 0, 0, 0, 0, 0]
+    // }else if(phase==2){
+    //   v = v1
+    // }else{
+    //   v = v2
+    // }
 
-    var v = [1 - I0/N, 0, I0/N, 0, 0, 0, 0, 0, 0, 0]
+
+    // var v = [1 - I0/N, 0, I0/N, 0, 0, 0, 0, 0, 0, 0];
+    // var t = 0
+    // var P  = []
+    // var TI = []
+    // var Iters = []
+    // while (steps--) { 
+    //   if ((steps+1) % (sample_step) == 0) {
+    //     //    Dead   Hospital          Recovered        Infectious   Exposed
+    //     P.push([ N*v[9], N*(v[5]+v[6]),  N*(v[7] + v[8]), N*v[2],    N*v[1] ])
+    //     Iters.push(v)
+    //     TI.push(N*(1-v[0]))
+    //   }
+    //   v = integrate(method,f,v,t,dt);
+    //   t+=dt
+    // }
+    // console.log(P);
+    // if(phase==1){
+    //   v1 = v
+    // }else{
+    //   v2 = v1
+    // }
+
+    let t1 = 0
+    let t2 = 0
+    //let steps1 = 0;
+    //let steps2 = 0;
+
+    var v = [1 - I0/N, 0, I0/N, 0, 0, 0, 0, 0, 0, 0];
     var t = 0
-
+    
     var P  = []
     var TI = []
     var Iters = []
 
     while (steps--) {
       if ((steps+1) % (sample_step) == 0) {
-            //    Dead   Hospital          Recovered        Infectious   Exposed
-        P.push([ N*v[9], N*(v[5]+v[6]),  N*(v[7] + v[8]), N*v[2],    N*v[1] ])
-        Iters.push(v)
-        TI.push(N*(1-v[0]))
-        // console.log((v[0] + v[1] + v[2] + v[3] + v[4] + v[5] + v[6] + v[7] + v[8] + v[9]))
-        // console.log(v[0] , v[1] , v[2] , v[3] , v[4] , v[5] , v[6] , v[7] , v[8] , v[9])
+        if(t<=(InterventionTime)){
+          //    Dead   Hospital          Recovered        Infectious   Exposed
+          P.push([ N*v[9], N*(v[5]+v[6]),  N*(v[7] + v[8]), N*v[2],    N*v[1] ])
+          Iters.push(v)
+          TI.push(N*(1-v[0]))
+          t1 = t;
+          v2 = v;
+          //steps1 = steps;
+        }
       }
+     
       v = integrate(method,f,v,t,dt);
       t+=dt
     }
-    return {"P": P, 
+
+    interpolation_steps = 40;
+    steps = (110*interpolation_steps);
+    dt = dt/interpolation_steps;
+    t = t1;
+    
+    while (steps--) {
+      if ((steps+1) % (sample_step) == 0) {
+        if(t>(InterventionTime) && t<=(InterventionTime2)){
+           //    Dead   Hospital          Recovered        Infectious   Exposed
+          P.push([ N*v2[9], N*(v2[5]+v2[6]),  N*(v2[7] + v2[8]), N*v2[2],    N*v2[1] ])
+          Iters.push(v2)
+          TI.push(N*(1-v2[0]))
+          t2 = t;
+          v3 = v2;
+        }     
+      }
+      v2 = integrate(method,f,v2,t,dt);
+      t+=dt
+    }
+    
+    
+    interpolation_steps = 40
+    steps = (110*interpolation_steps)
+    dt = dt/interpolation_steps
+    t = t2; 
+    while (steps--) {
+      if ((steps+1) % (sample_step) == 0) {
+        if(t>(InterventionTime2)){
+          P.push([ N*v3[9], N*(v3[5]+v3[6]),  N*(v3[7] + v3[8]), N*v3[2],    N*v3[1] ])
+          Iters.push(v3)
+          TI.push(N*(1-v3[0]))
+        } 
+      }
+      v3 = integrate(method,f,v3,t,dt);
+      t+=dt
+    }
+    console.log(P)
+    return {"P": P,
             "deaths": N*v[6], 
             "total": 1-v[0],
             "total_infected": TI,
@@ -213,7 +297,7 @@
     return P.reduce((max, b) => Math.max(max, sum(b, checked) ), sum(P[0], checked) )
   }
   
-  $: Sol            = get_solution(dt, N, I0, R0,R0_1, D_incbation, D_infectious, D_recovery_mild, D_hospital_lag, D_recovery_severe, D_death, P_SEVERE, CFR, InterventionTime, InterventionAmt,InterventionTime2,InterventionAmt2, duration)
+  $: Sol            = get_solution(dt, N, I0, R0,R0_1, D_incbation, D_infectious, D_recovery_mild, D_hospital_lag, D_recovery_severe, D_death, P_SEVERE, CFR, InterventionTime, InterventionAmt,InterventionTime2,InterventionAmt2, duration, phase)
   $: P              = Sol["P"].slice(0,100)
   $: timestep       = dt
   $: tmax           = dt*100
@@ -275,11 +359,12 @@
       InterventionTimeStart = InterventionTime
       Plock = Pmax
       lock = true
+      phase = 1
       //Intervention_Selected = 1
     }
 
     var dragged = function (d) {
-      
+
       // InterventionTime = Math.max( (*(1 + (event.x - dragstarty)/500)), 10)
       // console.log(event.x)
       InterventionTime = Math.min(tmax-1, Math.max(0, InterventionTimeStart + xScaleTimeInv(event.x - dragstarty)))
@@ -302,6 +387,7 @@ var drag_intervention2 = function (){
       InterventionTimeStart = InterventionTime2
       Plock = Pmax
       lock = true
+      phase = 2
       Intervention_Selected = 2
     }
 
