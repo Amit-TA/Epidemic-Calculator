@@ -136,23 +136,27 @@
 
     function f(t, x){
       // SEIR ODE
-      if (Intervention_Selected === 1) {
-        if (t > InterventionTime && t < InterventionTime + duration){
+      // if (Intervention_Selected === 1) {
+        if (t > InterventionTime && t < InterventionTime2){
             var beta = (InterventionAmt)*R0/(D_infectious)
-        } else if (t > InterventionTime + duration) {
-            var beta = 0.5*R0/(D_infectious)        
-        } else {
+        } else if (t > InterventionTime2 && t < InterventionTime2  + duration) {
+            var beta = (InterventionAmt2)*R0_1/(D_infectious)       
+        } else if (t > InterventionTime2 + duration) { 
+          var beta = 0.5 * R0/(D_infectious)
+        }
+        else {
           var beta = R0/(D_infectious)
         }
-      } else {
-        if (t > InterventionTime2 && t < InterventionTime2 + duration){
-          var beta = (InterventionAmt2)*R0_1/(D_infectious)
-        } else if (t > InterventionTime2 + duration) {
-          var beta = 0.5*R0_1/(D_infectious)        
-        } else {
-          var beta = R0_1/(D_infectious)
-        }
-      }
+      // } else {
+      //   console.log("second")
+      //   if (t > InterventionTime2 && t < InterventionTime2 + duration){
+      //     var beta = (InterventionAmt2)*R0_1/(D_infectious)
+      //   } else if (t > InterventionTime2 + duration) {
+      //     var beta = 0.5*R0_1/(D_infectious)        
+      //   } else {
+      //     var beta = R0_1/(D_infectious)
+      //   }
+      //}
 
       var a     = 1/D_incbation
       var gamma = 1/D_infectious
@@ -168,6 +172,7 @@
       var R_Severe = x[8] // Recovered
       var R_Fatal  = x[9] // Dead
 
+    
       var p_severe = P_SEVERE
       var p_fatal  = CFR
       var p_mild   = 1 - P_SEVERE - CFR
@@ -234,6 +239,7 @@
     while (steps--) {
       if ((steps+1) % (sample_step) == 0) {
         if(t<=(InterventionTime)){
+          
           //    Dead   Hospital          Recovered        Infectious   Exposed
           P.push([ N*v[9], N*(v[5]+v[6]),  N*(v[7] + v[8]), N*v[2],    N*v[1] ])
           Iters.push(v)
@@ -241,12 +247,18 @@
           t1 = t;
           v2 = v;
           //steps1 = steps;
+          
         }
+        
       }
-     
       v = integrate(method,f,v,t,dt);
-      t+=dt
+          t+=dt
+      
     }
+    
+    console.log(P.length)
+
+    
 
     interpolation_steps = 40;
     steps = (110*interpolation_steps);
@@ -255,36 +267,40 @@
     
     while (steps--) {
       if ((steps+1) % (sample_step) == 0) {
-        if(t>(InterventionTime) && t<=(InterventionTime2)){
+        if(t>(InterventionTime) && t<=(InterventionTime2 + duration)){
            //    Dead   Hospital          Recovered        Infectious   Exposed
           P.push([ N*v2[9], N*(v2[5]+v2[6]),  N*(v2[7] + v2[8]), N*v2[2],    N*v2[1] ])
           Iters.push(v2)
           TI.push(N*(1-v2[0]))
           t2 = t;
-          v3 = v2;
-        }     
+          v3 = v2;          
+        }          
       }
       v2 = integrate(method,f,v2,t,dt);
-      t+=dt
+      t+=dt 
     }
     
-    
+    console.log(P.length)
     interpolation_steps = 40
     steps = (110*interpolation_steps)
     dt = dt/interpolation_steps
     t = t2; 
     while (steps--) {
       if ((steps+1) % (sample_step) == 0) {
-        if(t>(InterventionTime2)){
+        if(t>(InterventionTime2 + duration)){
           P.push([ N*v3[9], N*(v3[5]+v3[6]),  N*(v3[7] + v3[8]), N*v3[2],    N*v3[1] ])
           Iters.push(v3)
           TI.push(N*(1-v3[0]))
+          
         } 
-      }
-      v3 = integrate(method,f,v3,t,dt);
+        v3 = integrate(method,f,v3,t,dt);
       t+=dt
+      }
+      
     }
-    console.log(P)
+    console.log(v1)
+    console.log(P.length)
+   
     return {"P": P,
             "deaths": N*v[6], 
             "total": 1-v[0],
