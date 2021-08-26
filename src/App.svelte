@@ -137,26 +137,15 @@
     function f(t, x){
       // SEIR ODE
       // if (Intervention_Selected === 1) {
-        if (t > InterventionTime && t < InterventionTime2){
-            var beta = (InterventionAmt)*R0/(D_infectious)
-        } else if (t > InterventionTime2 && t < InterventionTime2  + duration) {
-            var beta = (InterventionAmt2)*R0_1/(D_infectious)       
-        } else if (t > InterventionTime2 + duration) { 
-          var beta = 0.5 * R0/(D_infectious)
+        if (t > InterventionTime && t < InterventionTime2) {
+            var beta = (InterventionAmt)*R0 / (D_infectious)
+        } else if (t > InterventionTime2) { 
+            var beta = (InterventionAmt2)*R0 / (D_infectious)
         }
         else {
-          var beta = R0/(D_infectious)
+            var beta = R0 / (D_infectious)
         }
-      // } else {
-      //   console.log("second")
-      //   if (t > InterventionTime2 && t < InterventionTime2 + duration){
-      //     var beta = (InterventionAmt2)*R0_1/(D_infectious)
-      //   } else if (t > InterventionTime2 + duration) {
-      //     var beta = 0.5*R0_1/(D_infectious)        
-      //   } else {
-      //     var beta = R0_1/(D_infectious)
-      //   }
-      //}
+   
 
       var a     = 1/D_incbation
       var gamma = 1/D_infectious
@@ -191,38 +180,6 @@
       //      0   1   2   3      4        5          6       7        8          9
       return [dS, dE, dI, dMild, dSevere, dSevere_H, dFatal, dR_Mild, dR_Severe, dR_Fatal]
     }
-    
-    // var v = [];
-    // if(phase==1){
-    //   v = [1 - I0/N, 0, I0/N, 0, 0, 0, 0, 0, 0, 0]
-    // }else if(phase==2){
-    //   v = v1
-    // }else{
-    //   v = v2
-    // }
-
-
-    // var v = [1 - I0/N, 0, I0/N, 0, 0, 0, 0, 0, 0, 0];
-    // var t = 0
-    // var P  = []
-    // var TI = []
-    // var Iters = []
-    // while (steps--) { 
-    //   if ((steps+1) % (sample_step) == 0) {
-    //     //    Dead   Hospital          Recovered        Infectious   Exposed
-    //     P.push([ N*v[9], N*(v[5]+v[6]),  N*(v[7] + v[8]), N*v[2],    N*v[1] ])
-    //     Iters.push(v)
-    //     TI.push(N*(1-v[0]))
-    //   }
-    //   v = integrate(method,f,v,t,dt);
-    //   t+=dt
-    // }
-    // console.log(P);
-    // if(phase==1){
-    //   v1 = v
-    // }else{
-    //   v2 = v1
-    // }
 
     let t1 = 0
     let t2 = 0
@@ -248,58 +205,50 @@
           v2 = v;
           //steps1 = steps;
           
+        } else {
+          break
         }
-        
       }
       v = integrate(method,f,v,t,dt);
-          t+=dt
-      
+      t+=dt
     }
-    
-    console.log(P.length)
 
-    
-
-    interpolation_steps = 40;
-    steps = (110*interpolation_steps);
-    dt = dt/interpolation_steps;
     t = t1;
     
     while (steps--) {
       if ((steps+1) % (sample_step) == 0) {
-        if(t>(InterventionTime) && t<=(InterventionTime2 + duration)){
+        if(t>(InterventionTime) && t<=(InterventionTime2)){
            //    Dead   Hospital          Recovered        Infectious   Exposed
           P.push([ N*v2[9], N*(v2[5]+v2[6]),  N*(v2[7] + v2[8]), N*v2[2],    N*v2[1] ])
           Iters.push(v2)
           TI.push(N*(1-v2[0]))
           t2 = t;
           v3 = v2;          
+        } else {
+          break
         }          
       }
       v2 = integrate(method,f,v2,t,dt);
       t+=dt 
     }
-    
-    console.log(P.length)
-    interpolation_steps = 40
-    steps = (110*interpolation_steps)
-    dt = dt/interpolation_steps
+
     t = t2; 
+
     while (steps--) {
       if ((steps+1) % (sample_step) == 0) {
-        if(t>(InterventionTime2 + duration)){
+        if(t>(InterventionTime2)){
           P.push([ N*v3[9], N*(v3[5]+v3[6]),  N*(v3[7] + v3[8]), N*v3[2],    N*v3[1] ])
           Iters.push(v3)
           TI.push(N*(1-v3[0]))
           
+        } else {
+          break
         } 
-        v3 = integrate(method,f,v3,t,dt);
-      t+=dt
       }
-      
+      v3 = integrate(method,f,v3,t,dt);
+      t+=dt
     }
-    console.log(v1)
-    console.log(P.length)
+
    
     return {"P": P,
             "deaths": N*v[6], 
