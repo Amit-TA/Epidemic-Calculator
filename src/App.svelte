@@ -332,8 +332,12 @@
 
       // InterventionTime = Math.max( (*(1 + (event.x - dragstarty)/500)), 10)
       // console.log(event.x)
+      var oldInterventionTime = InterventionTime
       InterventionTime = Math.min(tmax-1, Math.max(0, InterventionTimeStart + xScaleTimeInv(event.x - dragstarty)))
-    }
+      if(InterventionTime > InterventionTime2){
+        console.log('crossed');
+        InterventionTime = oldInterventionTime
+      }    }
 
     var dragend = function (d) {
       lock = false
@@ -359,8 +363,12 @@ var drag_intervention2 = function (){
     var dragged = function (d) {
       // InterventionTime = Math.max( (*(1 + (event.x - dragstarty)/500)), 10)
       // console.log(event.x)
+      var oldInterventionTime2 = InterventionTime2
       InterventionTime2 = Math.min(tmax-1, Math.max(0, InterventionTimeStart + xScaleTimeInv(event.x - dragstarty)))
-    }
+      if(InterventionTime2 < InterventionTime){
+        console.log('crossed');
+        InterventionTime2 = oldInterventionTime2
+      }    }
 
     var dragend = function (d) {
       lock = false
